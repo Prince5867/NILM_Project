@@ -28,6 +28,21 @@ def resample_uniform(interpolator, start_time, end_time,appliance, step=10):
         appliance: uniform_values
     })
 
+def sampling_frequency(df, appliance):
+    signal = df[appliance].values  # or any other appliance
+    timestamps = df["Unix"].values
+    dt = np.median(np.diff(timestamps))
+    n = len(signal)
+    freqs = np.fft.rfftfreq(n, d=dt)
+    freqs = freqs[1:]  # Exclude the zero frequency component
+    fft_values = np.abs(np.fft.rfft(signal))  # Remove DC component
+    fft_values = fft_values[1:]  # Exclude the zero frequency component
+    # print(fft_values)
+    # print(freqs)
+    # print(max(freqs))
+    # print(int(1/(2*max(freqs))))
+    return int(1/(2*max(freqs)))
+
 def main():
     appliance = ['Fridge','Freezer','Washing Machine','Washer Dryer','Tumble Dryer','Dishwasher','Microwave','Toaster','Kettle',
                 'Computer','Television','Electric Heater','Hi-Fi','Router','Dehumidifier','Bread-maker',
@@ -42,6 +57,16 @@ def main():
             output_path = os.path.join(reffit_path, 'Processed',appliance)
             os.makedirs(output_path, exist_ok=True)
             print("output path    ",output_path)
+            step = 4
+            for item in folder_path.iterdir():
+                if item.is_file():
+                    print("File:", item)
+                    df = pd.read_csv(item)
+                    new_step = sampling_frequency(df, appliance)  # Use the sampling frequency of the appliance
+                    if new_step < step:
+                        step = new_step
+                        print(f"Adjusted step size to {step} based on sampling frequency.")
+
             for item in folder_path.iterdir():
                 if item.is_file():
                     print("File:", item)
@@ -49,7 +74,6 @@ def main():
                     interpolator = digital_to_analog(df, appliance, time_col="Unix")
                     start = df["Unix"].min()
                     end = df["Unix"].max()
-                    step = 4  # 10 seconds
                     resampled_df = resample_uniform(interpolator, start, end, appliance, step)
 
                     output_path = os.path.join(folder_path,item.name)
