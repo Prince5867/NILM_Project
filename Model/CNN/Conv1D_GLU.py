@@ -1,5 +1,7 @@
-from tensorflow.keras.layers import Layer, Conv1D, Multiply, Activation, Input, Dense, MaxPooling1D, Dropout, LSTM, Concatenate
-from tensorflow.keras.models import Model
+
+import tf_keras as keras
+from keras.layers import Layer, Conv1D, Multiply, Activation, Input, Dense, MaxPooling1D, Dropout, LSTM, Concatenate
+from keras.models import Model
 import tensorflow as tf
 
 class Conv1DGLU(Layer):
@@ -12,5 +14,6 @@ class Conv1DGLU(Layer):
 
     def call(self, inputs):
         linear_out = self.conv_linear(inputs)
-        gate_out = tf.keras.activations.sigmoid(self.conv_gate(inputs))
+        # gate_out = tf.keras.activations.sigmoid(self.conv_gate(inputs))
+        gate_out = keras.activations.relu(self.conv_gate(inputs), max_value=6) / 6
         return Multiply()([linear_out, gate_out])
