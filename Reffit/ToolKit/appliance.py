@@ -3,6 +3,8 @@ from collections import OrderedDict, defaultdict
 import pandas as pd
 import os
 from pathlib import Path
+import matplotlib.pyplot as plt
+import math
 class Appliance_Manipulation:
 
     """
@@ -146,15 +148,113 @@ class Appliance_Manipulation:
                 except Exception as e:
                     print(f"Error processing {house} for {appliance_name}: {e}")
 
+    def plot_all_appliances_grid(self, appliance_names, max_points=1000):
+        """
+        Preview each appliance CSV for user confirmation,
+        then plot all selected data in a grid at the end.
+        """
+        import math
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        from pathlib import Path
+
+        n = len(appliance_names)
+        cols = 3
+        rows = math.ceil(n / cols)
+
+        # Store tuples: (appliance_name, df) for approved files
+        approved_data = []
+
+        # First: preview and get user confirmation
+        for appliance_name in appliance_names:
+            folder_path = Path(f'{self.base_dir}/processed/{appliance_name}')
+            if not folder_path.exists():
+                print(f"Folder not found for appliance: {appliance_name}")
+                approved_data.append((appliance_name, None))
+                continue
+
+            approved_df = None
+            for file in folder_path.glob('*.csv'):
+                try:
+                    df = pd.read_csv(file)
+                    if appliance_name not in df.columns:
+                        print(f"Column {appliance_name} not found in {file.name}")
+                        continue
+
+                    if df[appliance_name].size < 400:
+                        continue
+
+                    preview_df = df.copy()
+                    if len(preview_df) > max_points:
+                        preview_df = preview_df.iloc[::len(preview_df) // max_points]
+
+                    # Preview plot
+                    plt.figure(figsize=(6, 3))
+                    plt.plot(preview_df['Unix'], preview_df[appliance_name])
+                    plt.title(f"Preview: {file.name}")
+                    plt.xlabel("Unix Time")
+                    plt.ylabel("Power (W)")
+                    plt.grid(True)
+                    plt.tight_layout()
+                    plt.show(block=True)  # waits for window close
+
+                    user_input = input(f"Include {file.name} for {appliance_name}? (y/n): ")
+                    plt.close('all')
+
+                    if user_input.lower() == 'y':
+                        approved_df = df
+                        break  # pick only first approved CSV
+                except Exception as e:
+                    print(f"Error reading {file.name} for {appliance_name}: {e}")
+
+            approved_data.append((appliance_name, approved_df))
+
+        # Second: create figure and plot all approved data
+        fig, axes = plt.subplots(rows, cols, figsize=(15, rows * 3), squeeze=False)
+        fig.suptitle('Appliance Power Consumption Overview', fontsize=16)
+
+        for idx, (appliance_name, df) in enumerate(approved_data):
+            r, c = divmod(idx, cols)
+            ax = axes[r][c]
+
+            if df is None:
+                ax.set_title(appliance_name.capitalize())
+                ax.text(0.5, 0.5, 'No data', ha='center', va='center')
+                ax.axis('off')
+                continue
+
+            # Downsample for final plot if needed
+            if len(df) > max_points:
+                df = df.iloc[::len(df) // max_points]
+
+            ax.plot(df['Unix'], df[appliance_name])
+            ax.set_title(appliance_name.capitalize(), fontsize=11)
+            ax.set_xlabel('Unix Time')
+            ax.set_ylabel('Power (W)')
+            ax.grid(True)
+
+        # Remove unused subplots
+        for j in range(n, rows * cols):
+            r, c = divmod(j, cols)
+            fig.delaxes(axes[r][c])
+
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.show()
+
+
 def main():
     appliance = ['Fridge','Freezer','Washing Machine','Washer Dryer','Tumble Dryer','Dishwasher','Microwave','Toaster','Kettle',
                 'Computer','Television','Electric Heater','Hi-Fi','Router','Dehumidifier','Bread-maker',
                 'Games Console','Network Site','Food Mixer','Overhead Fan','Vivarium','Pond Pump']
     
-    for appliance in appliance:
-        appliance_manipulation = Appliance_Manipulation()
+    appliance_with_issues = ['Fridge','Freezer','Washing Machine','Dishwasher',
+                'Computer','Television','Electric Heater']
+    
+    appliance_manipulation = Appliance_Manipulation()
+    # for appliance in appliance:
         # appliance_map = appliance_manipulation.map_creator()
-        fridge_data = appliance_manipulation.column_extractor(appliance)
+        # fridge_data = appliance_manipulation.column_extractor(appliance)
+    plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
 
 
 if __name__ == "__main__":
