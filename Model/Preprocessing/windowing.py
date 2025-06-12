@@ -124,9 +124,11 @@ def preprocess_folder(input_foldername,output_filename, output_folder, column_na
 
 def main():
 
-    appliance = ['Fridge','Freezer','Washing Machine','Washer Dryer','Tumble Dryer','Dishwasher','Microwave','Toaster','Kettle',
-                'Computer','Television','Electric Heater','Hi-Fi','Router','Dehumidifier','Bread-maker',
-                'Games Console','Network Site','Food Mixer','Overhead Fan','Vivarium','Pond Pump']
+    # appliance = ['Fridge','Freezer','Washing Machine','Washer Dryer','Tumble Dryer','Dishwasher','Microwave','Toaster','Kettle',
+    #             'Computer','Television','Electric Heater','Hi-Fi','Router','Dehumidifier','Bread-maker',
+    #             'Games Console','Network Site','Food Mixer','Overhead Fan','Vivarium','Pond Pump']
+
+    appliance = ['Aggregate']
     for appliance in appliance:   
         base_dir = Path(__file__).resolve().parent.parent.parent
         reffit_path = os.path.join(base_dir, 'Reffit')

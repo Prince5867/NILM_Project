@@ -102,6 +102,24 @@ class Appliance_Manipulation:
 
         return sorted_final_dict
     
+    def aggregate_data_extractor(self):
+        reffit_path = self.base_dir
+        for item in os.listdir(reffit_path):
+            if item.startswith('House') and item.endswith('.csv'):
+                df = pd.read_csv(f'{reffit_path}/{item}')
+                aggregate = df['Aggregate']
+                time = df["Unix"] - df["Unix"].iloc[0]
+
+                new_df = pd.DataFrame({
+                            'Unix': time,
+                            'Aggregate': aggregate,
+                        })
+                try:
+                    os.makedirs(f'{self.base_dir}/Aggregate', exist_ok=True)
+                    new_df.to_csv(f'{self.base_dir}/Aggregate/Aggregate_{item}', index=False)
+                except Exception as e:
+                    print(f"Error processing {item} for Aggregate: {e}")
+
     
     def column_extractor(self, appliance_name):
         """
@@ -254,7 +272,8 @@ def main():
     # for appliance in appliance:
         # appliance_map = appliance_manipulation.map_creator()
         # fridge_data = appliance_manipulation.column_extractor(appliance)
-    plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
+    # plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
+    aggregate_data_extractor = appliance_manipulation.aggregate_data_extractor()
 
 
 if __name__ == "__main__":
