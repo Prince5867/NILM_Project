@@ -284,9 +284,9 @@ def main():
     # for appliance in appliance:
         # appliance_map = appliance_manipulation.map_creator()
         # fridge_data = appliance_manipulation.column_extractor(appliance)
-    # plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
+    plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
     # aggregate_data_extractor = appliance_manipulation.aggregate_data_extractor()
-    appliance_manipulation.extract_full_house_data(300,'House_9.csv')
+    # appliance_manipulation.extract_full_house_data(300,'House_9.csv')
 
 
 if __name__ == "__main__":
