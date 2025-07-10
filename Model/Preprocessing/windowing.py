@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import numpy as np
 
-def trim_inactive_periods(input_foldername, column_name, output_filename, output_folder, pre_padding=250, post_padding=250, timestamp_col="Unix"):
+def trim_inactive_periods(input_foldername, column_name, output_filename, output_folder, pre_padding=100, post_padding=100, timestamp_col="Unix"):
     """
     Keeps active segments with context before and after appliance usage.
     
@@ -124,11 +124,11 @@ def preprocess_folder(input_foldername,output_filename, output_folder, column_na
 
 def main():
 
-    # appliance = ['Fridge','Freezer','Washing Machine','Washer Dryer','Tumble Dryer','Dishwasher','Microwave','Toaster','Kettle',
-    #             'Computer','Television','Electric Heater','Hi-Fi','Router','Dehumidifier','Bread-maker',
-    #             'Games Console','Network Site','Food Mixer','Overhead Fan','Vivarium','Pond Pump']
+    appliance = ['Fridge','Freezer','Washing Machine','Washer Dryer','Tumble Dryer','Dishwasher','Microwave','Toaster','Kettle',
+                'Computer','Television','Electric Heater','Hi-Fi','Router','Dehumidifier','Bread-maker',
+                'Games Console','Network Site','Food Mixer','Overhead Fan','Vivarium','Pond Pump']
 
-    appliance = ['Aggregate']
+    # appliance = ['Aggregate']
     for appliance in appliance:   
         base_dir = Path(__file__).resolve().parent.parent.parent
         reffit_path = os.path.join(base_dir, 'Reffit')
