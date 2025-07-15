@@ -1,6 +1,7 @@
 import re
 from collections import OrderedDict, defaultdict
 import pandas as pd
+import numpy as np
 import os
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -270,7 +271,97 @@ class Appliance_Manipulation:
                 if house == house_no.split(".")[0]:
                     df = df.rename(columns={f"Appliance{appliance_no[0]}": appliance})
                     df['Unix'] = df['Unix'] - df['Unix'].iloc[0]
+                    df['Unix'] = (df['Unix'] // 60) * 60  # round to nearest minute
+
         df.to_csv(f'{house_path}/Processed/{house_no}', index=False)
+
+    def combining_houses(self, house_list, req_appliances, include_agg=False, resample_freq='1min'):
+        import pandas as pd
+        import numpy as np
+        from functools import reduce
+
+        combined_data_parts = []
+        house_path = self.base_dir
+        map_houses = self.map_creator()
+        used_appliances = set()  # ✅ Track already included appliances
+
+        for house_file in house_list:
+            try:
+                house_name = house_file.replace(".csv", "")
+                df = pd.read_csv(f'{self.base_dir}/{house_file}')
+
+                # ✅ Normalize or convert Unix to datetime for resampling
+                if not np.issubdtype(df['Unix'].dtype, np.number):
+                    df['Datetime'] = pd.to_datetime(df['Unix'])
+                else:
+                    df['Datetime'] = pd.to_datetime(df['Unix'], unit='s')
+                df.set_index('Datetime', inplace=True)
+
+                keep_cols = []
+
+                if include_agg and 'Aggregate' in df.columns:
+                    df.rename(columns={'Aggregate': 'Aggregate'}, inplace=True)
+                    keep_cols.append('Aggregate')
+
+                selected_appliances = []
+
+                for appliance, houses in map_houses.items():
+                    if appliance not in req_appliances:
+                        continue
+                    if appliance in used_appliances:
+                        continue
+                    if house_name not in houses:
+                        continue
+
+                    for idx in houses[house_name]:
+                        col_name = f'Appliance{idx}'
+                        if col_name in df.columns:
+                            df.rename(columns={col_name: appliance}, inplace=True)
+
+                    if appliance in df.columns:
+                        keep_cols.append(appliance)
+                        used_appliances.add(appliance)
+                        selected_appliances.append(appliance)
+
+                if selected_appliances:
+                    print(f"✔ {house_file} contributed: {selected_appliances}")
+                else:
+                    print(f"⚠ {house_file} skipped — no new appliances found.")
+
+                # ✅ Only process if useful data found
+                if keep_cols:
+                    keep_cols.append('Unix') if 'Unix' in df.columns else None
+                    temp_df = df[keep_cols].copy()
+
+                    # ✅ Resample to uniform time intervals
+                    temp_df_resampled = temp_df.resample(resample_freq).mean()
+
+                    # ✅ Restore Unix from Datetime index
+                    temp_df_resampled['Unix'] = temp_df_resampled.index.astype('int64') // 10**9
+                    temp_df_resampled.reset_index(drop=True, inplace=True)
+
+                    # ✅ Reorder: move Unix to first column
+                    cols = ['Unix'] + [c for c in temp_df_resampled.columns if c != 'Unix']
+                    combined_data_parts.append(temp_df_resampled[cols])
+
+            except Exception as e:
+                print(f"❌ Error processing {house_file}: {e}")
+
+        if not combined_data_parts:
+            return pd.DataFrame()
+
+        combined_df = reduce(lambda left, right: pd.merge(left, right, on='Unix', how='outer'), combined_data_parts)
+        combined_df.sort_values('Unix', inplace=True)
+        combined_df.reset_index(drop=True, inplace=True)
+        combined_df.to_csv(f'{house_path}/Processed/Synthetic_House.csv', index=False)
+
+        print(f"✅ Final combined appliances: {used_appliances}")
+        return combined_df
+
+
+
+
+
 
 def main():
     appliance = ['Fridge','Freezer','Washing Machine','Washer Dryer','Tumble Dryer','Dishwasher','Microwave','Toaster','Kettle',
@@ -284,9 +375,10 @@ def main():
     # for appliance in appliance:
         # appliance_map = appliance_manipulation.map_creator()
         # fridge_data = appliance_manipulation.column_extractor(appliance)
-    plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
+    # plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
     # aggregate_data_extractor = appliance_manipulation.aggregate_data_extractor()
     # appliance_manipulation.extract_full_house_data(300,'House_9.csv')
+    appliance_manipulation.combining_houses(['House_1.csv','House_20.csv'],['Washer Dryer','Dishwasher','Kettle'], include_agg=False)
 
 
 if __name__ == "__main__":
