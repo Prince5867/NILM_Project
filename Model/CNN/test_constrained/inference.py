@@ -1,0 +1,151 @@
+import os
+import json
+import pandas as pd
+import numpy as np
+from pathlib import Path
+from sklearn.preprocessing import MinMaxScaler
+import tensorflow as tf  # Needed for loading Keras models
+import custom_fn_library
+from keras.models import load_model
+from sklearn.metrics import explained_variance_score
+
+class InferenceModel:
+    def __init__(self, model_path):
+        self.model_path = Path(model_path)
+        self.base_dir = self.model_path.parent
+        self.model = self.load_model()
+
+        # Load scalers from JSON files
+        self.scaler_Y = self.load_scaler(self.base_dir / 'scaler_params_Y.json')
+        self.scaler_y_test = self.load_scaler(self.base_dir / 'scaler_params_y_test.json')
+
+    def load_model(self):
+        print(f"Loading model from: {self.model_path}")
+        finetuned_loaded_model = load_model(self.model_path, custom_objects={
+            'relu6_div6': (custom_fn_library.relu6_div6),
+            'Conv1DGLUBlock': (custom_fn_library.Conv1DGLUBlock),
+            'ResidualBlock': (custom_fn_library.ResidualBlock),
+            })
+        return finetuned_loaded_model
+
+    def load_scaler(self, json_path):
+        print(f"Loading scaler from: {json_path}")
+        if not json_path.exists():
+            raise FileNotFoundError(f"Scaler params file not found: {json_path}")
+
+        with open(json_path, 'r') as f:
+            params = json.load(f)
+
+        scaler = MinMaxScaler()
+        scaler.min_ = np.array(params['min_'])
+        scaler.scale_ = np.array(params['scale_'])
+        scaler.data_min_ = np.array(params['data_min_'])
+        scaler.data_max_ = np.array(params['data_max_'])
+        scaler.data_range_ = np.array(params['data_range_'])
+        return scaler
+
+    def get_data_files(self):
+        data_dict = {'X': '', 'y': '', 'X_test': '', 'y_test': ''}
+        print(f"Looking for CSV files in: {self.base_dir}")
+        
+        for item in self.base_dir.iterdir():
+            if item.suffix == '.csv':
+                print(f"Found CSV: {item.name}")
+                if item.name == 'Synthetic_Aggregate.csv':
+                    data_dict['X'] = item
+                elif item.name == 'IRL_Aggregate.csv':
+                    data_dict['X_test'] = item
+                elif item.name == 'Synthetic_Y.csv':
+                    data_dict['y'] = item
+                elif item.name == 'IRL_Y.csv':
+                    data_dict['y_test'] = item
+        return data_dict
+
+    def load_data(self, data_dict):
+        def load_csv(path):
+            return np.array(pd.read_csv(path))
+
+        try:
+            X = load_csv(data_dict['X'])
+            y = load_csv(data_dict['y'])
+            X_test = load_csv(data_dict['X_test'])
+            y_test = load_csv(data_dict['y_test'])
+        except Exception as e:
+            print("Error loading data:", e)
+            raise e
+
+        return X, y, X_test, y_test
+
+    def preprocess_data(self):
+        data_dict = self.get_data_files()
+        print(data_dict)
+        X, y, X_test, y_test = self.load_data(data_dict)
+
+        # Reshape inputs if needed
+        if X.ndim == 2:
+            X = X.reshape(X.shape[0], X.shape[1], 1)
+        if X_test.ndim == 2:
+            X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+
+        # Reshape outputs
+        if y.ndim == 2:
+            y = y.reshape(y.shape[0], 75, 3)
+        if y_test.ndim == 2:
+            y_test = y_test.reshape(y_test.shape[0], 75, 3)
+
+        return X, y, X_test, y_test
+
+    def run_model(self, X):
+        print("Running inference...")
+        predictions = self.model.predict(X)
+        return predictions
+
+    def inverse_scale(self, scaled_array, scaler):
+        # Flatten last dims for inverse transform
+        flat_scaled = scaled_array.reshape(-1, scaled_array.shape[-1])
+        flat_unscaled = scaler.inverse_transform(flat_scaled)
+        unscaled = flat_unscaled.reshape(scaled_array.shape)
+        return unscaled
+
+
+    def evaluate_model(self, predictions, y_true):
+        # Inverse scale both predictions and ground truth
+        predictions_watts = self.inverse_scale(predictions, self.scaler_y_test)
+        y_true_watts = self.inverse_scale(y_true, self.scaler_y_test)
+
+        # Flatten for metric calculations
+        y_true_flat = y_true_watts.flatten()
+        y_pred_flat = predictions_watts.flatten()
+
+        # Residuals
+        residuals = y_true_flat - y_pred_flat
+
+        # Metrics
+        mae = np.mean(np.abs(residuals))
+        residual_variance = np.var(residuals)
+        explained_variance = explained_variance_score(y_true_flat, y_pred_flat)
+
+        # Print results
+        print(f"Mean Absolute Error (Watts): {mae:.4f}")
+        print(f"Residual Variance: {residual_variance:.4f}")
+        print(f"Explained Variance Score: {explained_variance:.4f}")
+
+        return {
+            "mae": mae,
+            "residual_variance": residual_variance,
+            "explained_variance": explained_variance
+        }
+
+
+def main():
+    model_path = f'{Path(__file__).resolve().parent}/finetuned_regression_model.keras'  # Update if needed
+    inference = InferenceModel(model_path)
+
+    X, y, X_test, y_test = inference.preprocess_data()
+
+    predictions = inference.run_model(X)
+
+    inference.evaluate_model(predictions, y)
+
+if __name__ == "__main__":
+    main()
