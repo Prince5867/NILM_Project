@@ -48,7 +48,8 @@ def main():
     #             'Computer','Television','Electric Heater','Hi-Fi','Router','Dehumidifier','Bread-maker',
     #             'Games Console','Network Site','Food Mixer','Overhead Fan','Vivarium','Pond Pump']
     
-    appliance = ['Aggregate']
+    # appliance = ['Aggregate']
+    appliance = ['Synthetic_House']
     
     for appliance in appliance:
         base_dir = Path(__file__).resolve().parent.parent.parent

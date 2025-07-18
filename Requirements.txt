@@ -2,6 +2,7 @@
 numpy
 pandas
 scipy
+pathlib
 
 # Plotting and visualization
 matplotlib
@@ -9,6 +10,7 @@ matplotlib
 scikit-learn
 tensorflow==2.13.0  # Or your specific version
 keras
+sklearn
 
 # For data handling
 PyYAML
