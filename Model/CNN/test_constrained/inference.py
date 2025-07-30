@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from sklearn.preprocessing import MinMaxScaler
-import tflite_runtime as tflite
+import tensorflow as tf
 from sklearn.metrics import explained_variance_score
 
 
@@ -21,7 +21,7 @@ class InferenceModel:
 
     def load_tflite_model(self):
         print(f"Loading TFLite model from: {self.model_path}")
-        interpreter = tflite.Interpreter(model_path=str(self.model_path))
+        interpreter = tf.lite.Interpreter(model_path=str(self.model_path))
         interpreter.allocate_tensors()
         return interpreter
 
@@ -139,7 +139,7 @@ class InferenceModel:
 
 
 def main():
-    model_path = Path(__file__).resolve().parent / 'NILM_model.tflite'
+    model_path = Path(__file__).resolve().parent / 'model.tflite'
     inference = InferenceModel(model_path)
     X, y, X_test, y_test = inference.preprocess_data()
     predictions = inference.run_model(X)

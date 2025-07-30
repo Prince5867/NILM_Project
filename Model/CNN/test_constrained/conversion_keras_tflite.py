@@ -13,14 +13,15 @@ def convert_model_to_tflite(model_path, output_path):
 
     print("🔄 Converting to TFLite format...")
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    # converter.allow_custom_ops = True
     converter.target_spec.supported_ops = [
     tf.lite.OpsSet.TFLITE_BUILTINS,
     tf.lite.OpsSet.SELECT_TF_OPS
     ]
     converter._experimental_lower_tensor_list_ops = False
-    # Optional optimizations
+    # # Optional optimizations
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
-
+    # converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS]
     try:
         tflite_model = converter.convert()
     except Exception as e:
