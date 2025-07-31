@@ -1,14 +1,12 @@
 # Core scientific stack
-numpy
-pandas
-scipy
+numpy==2.1.3
+pandas==2.2.2
+scikit-learn==1.7.1
 
 # Plotting and visualization
-matplotlib
+tqdm
+maplotlib==3.9.2
 # Machine learning and deep learning
 scikit-learn
-tensorflow==2.13.0  # Or your specific version
-keras
+tensorflow==2.19.0  # Or your specific version
 
-# For data handling
-PyYAML

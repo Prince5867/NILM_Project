@@ -4,6 +4,8 @@ import numpy as np
 from pathlib import Path
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 from sklearn.metrics import explained_variance_score
 
 
@@ -98,7 +100,7 @@ class InferenceModel:
 
         predictions = []
 
-        for i in range(X.shape[0]):
+        for i in tqdm(range(X.shape[0]), desc="Inference Progress"):
             input_tensor = X[i:i+1].astype(np.float32)  # shape: (1, timesteps, 1)
             self.interpreter.set_tensor(input_index, input_tensor)
             self.interpreter.invoke()
@@ -136,6 +138,32 @@ class InferenceModel:
             "residual_variance": residual_variance,
             "explained_variance": explained_variance
         }
+    def plot_prediction(self, y_true, y_pred, sample_index=0):
+        """
+        Plots predicted vs. true values for a given sample.
+        """
+        y_true_unscaled = self.inverse_scale(y_true, self.scaler_y_test)
+        y_pred_unscaled = self.inverse_scale(y_pred, self.scaler_y_test)
+
+        plt.figure(figsize=(12, 6))
+        for appliance in range(y_true.shape[-1]):
+            plt.plot(
+                y_true_unscaled[sample_index, :, appliance],
+                label=f'True - Appliance {appliance + 1}',
+                linestyle='--'
+            )
+            plt.plot(
+                y_pred_unscaled[sample_index, :, appliance],
+                label=f'Pred - Appliance {appliance + 1}'
+            )
+
+        plt.title(f'Prediction vs Ground Truth for Sample {sample_index}')
+        plt.xlabel('Time step')
+        plt.ylabel('Power (Watts)')
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
 
 
 def main():
@@ -144,6 +172,7 @@ def main():
     X, y, X_test, y_test = inference.preprocess_data()
     predictions = inference.run_model(X)
     inference.evaluate_model(predictions, y)
+    inference.plot_prediction(y, predictions, sample_index=0)
 
 
 if __name__ == "__main__":
