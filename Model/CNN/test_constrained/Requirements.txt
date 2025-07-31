@@ -5,7 +5,7 @@ scikit-learn==1.7.1
 
 # Plotting and visualization
 tqdm
-maplotlib==3.9.2
+matplotlib==3.9.2
 # Machine learning and deep learning
 scikit-learn
 tensorflow==2.19.0  # Or your specific version
