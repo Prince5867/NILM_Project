@@ -187,12 +187,12 @@ class InferenceModel:
         print(f"Prediction plot saved as: {self.base_dir}/prediction_sample_{sample_index}.png")
 
 def main():
-    model_path = Path(__file__).resolve().parent / 'model.tflite'
+    model_path = Path(__file__).resolve().parent / 'quant8model.tflite'
     inference = InferenceModel(model_path)
     X, y, X_test, y_test = inference.preprocess_data()
-    predictions = inference.run_model(X_test)
-    inference.evaluate_model(predictions, y_test)
-    inference.plot_prediction(y_test, predictions, sample_index=0)
+    predictions = inference.run_model(X)
+    inference.evaluate_model(predictions, y)
+    inference.plot_prediction(y, predictions, sample_index=0)
 
 
 if __name__ == "__main__":

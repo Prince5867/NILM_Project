@@ -4,9 +4,9 @@ pandas==2.2.2
 scikit-learn==1.7.1
 
 # Plotting and visualization
-tqdm
+tqdm==4.67.1
 matplotlib==3.9.2
 # Machine learning and deep learning
-scikit-learn
+scikit-learn==1.5.2
 tensorflow==2.19.0  # Or your specific version
 
