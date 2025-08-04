@@ -84,18 +84,18 @@ class InferenceModel:
 
         # Reshape inputs
         if X.ndim == 2:
-            print(X.shape)
+            
             X = X.reshape(X.shape[0], X.shape[1], 1)
         if X_test.ndim == 2:
-            print(X_test.shape)
+
             X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
         # Reshape outputs
         if y.ndim == 2:
-            print(y.shape)
+
             y = y.reshape(y.shape[0]//75, 75, y.shape[-1])
         if y_test.ndim == 2:
-            print(y_test.shape)
+
             y_test = y_test.reshape(y_test.shape[0]//75, 75, y.shape[-1])
 
         return X[:no_samples], y[:no_samples], X_test[:no_samples], y_test[:no_samples]
@@ -201,7 +201,7 @@ def main():
     X, y, X_test, y_test = inference.preprocess_data(no_samples=args.samples)
     predictions = inference.run_model(X)
     inference.evaluate_model(predictions, y, model = args.model)
-    inference.plot_prediction(y, predictions, sample_index=0, model = args.model)
+    inference.plot_prediction(y, predictions, sample_index=110, model = args.model)
 
 
 if __name__ == "__main__":
