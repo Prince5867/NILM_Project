@@ -1,4 +1,5 @@
 import json
+import argparse
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -48,49 +49,56 @@ class InferenceModel:
         print(f"Looking for CSV files in: {self.base_dir}")
         for item in self.base_dir.iterdir():
             if item.suffix == '.csv':
-                print(f"Found CSV: {item.name}")
                 if item.name == 'Synthetic_Aggregate.csv':
+                    print(f"Found CSV: {item.name}")
                     data_dict['X'] = item
                 elif item.name == 'IRL_Aggregate.csv':
+                    print(f"Found CSV: {item.name}")
                     data_dict['X_test'] = item
                 elif item.name == 'Synthetic_Y.csv':
+                    print(f"Found CSV: {item.name}")
                     data_dict['y'] = item
                 elif item.name == 'IRL_Y.csv':
+                    print(f"Found CSV: {item.name}")
                     data_dict['y_test'] = item
         return data_dict
 
-    def load_data(self, data_dict, no_samples=1000):
+    def load_data(self, data_dict):
         def load_csv(path):
             return np.array(pd.read_csv(path))
 
         try:
-            X = load_csv(data_dict['X'])[:no_samples]
-            y = load_csv(data_dict['y'])[:no_samples]
-            X_test = load_csv(data_dict['X_test'])[:no_samples]
-            y_test = load_csv(data_dict['y_test'])[:no_samples]
+            X = load_csv(data_dict['X'])
+            y = load_csv(data_dict['y'])
+            X_test = load_csv(data_dict['X_test'])
+            y_test = load_csv(data_dict['y_test'])
         except Exception as e:
             print("Error loading data:", e)
             raise e
 
         return X, y, X_test, y_test
 
-    def preprocess_data(self):
+    def preprocess_data(self, no_samples=1000):
         data_dict = self.get_data_files()
         X, y, X_test, y_test = self.load_data(data_dict)
 
         # Reshape inputs
         if X.ndim == 2:
+            print(X.shape)
             X = X.reshape(X.shape[0], X.shape[1], 1)
         if X_test.ndim == 2:
+            print(X_test.shape)
             X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
         # Reshape outputs
         if y.ndim == 2:
-            y = y.reshape(y.shape[0], 75, 3)
+            print(y.shape)
+            y = y.reshape(y.shape[0]//75, 75, y.shape[-1])
         if y_test.ndim == 2:
-            y_test = y_test.reshape(y_test.shape[0], 75, 3)
+            print(y_test.shape)
+            y_test = y_test.reshape(y_test.shape[0]//75, 75, y.shape[-1])
 
-        return X, y, X_test, y_test
+        return X[:no_samples], y[:no_samples], X_test[:no_samples], y_test[:no_samples]
 
     def run_model(self, X):
         print("Running TFLite inference...")
@@ -101,14 +109,13 @@ class InferenceModel:
         predictions = []
 
         for i in tqdm(range(X.shape[0]), desc="Inference Progress"):
-            input_tensor = X[i:i+1].astype(np.float32)  # shape: (1, timesteps, 1)
+            input_tensor = X[i:i+1].astype(np.float32)
             self.interpreter.set_tensor(input_index, input_tensor)
             self.interpreter.invoke()
             output = self.interpreter.get_tensor(output_index)
-            predictions.append(output[0])  # remove batch dimension
+            predictions.append(output[0])
 
-        predictions = np.array(predictions)
-        return predictions
+        return np.array(predictions)
 
     def inverse_scale(self, scaled_array, scaler):
         flat_scaled = scaled_array.reshape(-1, scaled_array.shape[-1])
@@ -116,31 +123,29 @@ class InferenceModel:
         unscaled = flat_unscaled.reshape(scaled_array.shape)
         return unscaled
 
-    def evaluate_model(self, predictions, y_true):
-        predictions_watts = self.inverse_scale(predictions, self.scaler_y_test)
-        y_true_watts = self.inverse_scale(y_true, self.scaler_y_test)
+    def evaluate_model(self, predictions, y_true, model=''):
+        predictions_watts = self.inverse_scale(predictions, self.scaler_Y)
+        y_true_watts = self.inverse_scale(y_true, self.scaler_Y)
 
         y_true_flat = y_true_watts.reshape(-1, y_true_watts.shape[-1])
         y_pred_flat = predictions_watts.reshape(-1, predictions_watts.shape[-1])
-        
         residuals = y_true_flat - y_pred_flat
 
         mae = np.mean(np.abs(residuals))
         residual_variance = np.var(residuals)
         explained_variance = explained_variance_score(y_true_flat, y_pred_flat)
 
+        print(f"🔍 Evaluating model: {model}")
         print(f"📊 Overall Metrics:")
         print(f"Mean Absolute Error (Watts): {mae:.4f}")
         print(f"Residual Variance: {residual_variance:.4f}")
         print(f"Explained Variance Score: {explained_variance:.4f}")
 
-        # Per-class metrics
         print(f"\n📈 Per-Class Metrics:")
-        n_classes = y_true_flat.shape[1]
         class_names = ['Washer Dryer', 'Dishwasher', 'Kettle']
         per_class_results = {}
 
-        for i in range(n_classes):
+        for i in range(y_true_flat.shape[1]):
             mae_i = np.mean(np.abs(y_true_flat[:, i] - y_pred_flat[:, i]))
             var_i = np.var(y_true_flat[:, i] - y_pred_flat[:, i])
             evs_i = explained_variance_score(y_true_flat[:, i], y_pred_flat[:, i])
@@ -157,12 +162,10 @@ class InferenceModel:
             "explained_variance": explained_variance,
             "per_class": per_class_results
         }
-    def plot_prediction(self, y_true, y_pred, sample_index=0):
-        """
-        Plots predicted vs. true values for a given sample.
-        """
-        y_true_unscaled = self.inverse_scale(y_true, self.scaler_y_test)
-        y_pred_unscaled = self.inverse_scale(y_pred, self.scaler_y_test)
+
+    def plot_prediction(self, y_true, y_pred, sample_index=0, model = ''):
+        y_true_unscaled = self.inverse_scale(y_true, self.scaler_Y)
+        y_pred_unscaled = self.inverse_scale(y_pred, self.scaler_Y)
         list_of_appliances = ['Washer Dryer', 'Dishwasher', 'Kettle']
 
         plt.figure(figsize=(12, 6))
@@ -177,7 +180,7 @@ class InferenceModel:
                 label=f'Pred - {list_of_appliances[appliance]}'
             )
 
-        plt.title(f'Prediction vs Ground Truth for Sample {sample_index}')
+        plt.title(f'Prediction vs Ground Truth for Sample {sample_index} for Model {model}')
         plt.xlabel('Time step')
         plt.ylabel('Power (Watts)')
         plt.legend()
@@ -186,13 +189,19 @@ class InferenceModel:
         plt.savefig(f"{self.base_dir}/prediction_sample_{sample_index}.png")
         print(f"Prediction plot saved as: {self.base_dir}/prediction_sample_{sample_index}.png")
 
+
 def main():
-    model_path = Path(__file__).resolve().parent / 'quant8model.tflite'
+    parser = argparse.ArgumentParser(description="Run TFLite inference on appliance data")
+    parser.add_argument('--model', type=str, required=True, help='Path to .tflite model file')
+    parser.add_argument('--samples', type=int, default=1000, help='Number of samples to run inference on')
+    args = parser.parse_args()
+
+    model_path = Path(args.model).resolve()
     inference = InferenceModel(model_path)
-    X, y, X_test, y_test = inference.preprocess_data()
+    X, y, X_test, y_test = inference.preprocess_data(no_samples=args.samples)
     predictions = inference.run_model(X)
-    inference.evaluate_model(predictions, y)
-    inference.plot_prediction(y, predictions, sample_index=0)
+    inference.evaluate_model(predictions, y, model = args.model)
+    inference.plot_prediction(y, predictions, sample_index=0, model = args.model)
 
 
 if __name__ == "__main__":
