@@ -31,7 +31,7 @@ For memory purposes all the datasets and .csv files are excluded from this respo
         - DAD_converter.py — Dataset format conversion
         - windowing.py — Time window segmentation for time series
 
-- Reffit/ Main dataset organized by appliance
+- Refit/ Main dataset organized by appliance
     - Aggregate/ — Whole-house aggregate data
     - Kettle/
     - Fridge/
@@ -87,8 +87,29 @@ For memory purposes all the datasets and .csv files are excluded from this respo
 ---
 
 ## 📋 How to Run
+### Inference
+To run inference: the `inference` folder is independent and can run on it's own. Move to your desired location and install the requirements using 
 
+```bash
+pip install -r Requirements.txt
+```
+Then inside the `inference` directory, run the following command to start inference:
 
+```bash
+python inference.py --model model.tflite
+```
+`model.tflite` can be replaced by `quant16model.tflite` or `quant8model.tflite`. To chose the number of samples to run inference on, you can add another argument: `--samples 1000` to run on *1000* samples (by default)
+
+### NILM_pipeline
+To install libraries, please run inside the ***NILM_PROJECT*** directory:
+```bash
+pip install -r Requirements.txt
+```
+
+Each step is guided in the Notebook file `NILM_pipeline.ipynb`.
+
+### Refit
+Place Houses 1 to 21 inside the `Refit` directory, then run the lines in the main function of `Appliance.py`
 
 ---
 

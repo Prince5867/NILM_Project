@@ -104,10 +104,10 @@ class Appliance_Manipulation:
         return sorted_final_dict
     
     def aggregate_data_extractor(self):
-        reffit_path = self.base_dir
-        for item in os.listdir(reffit_path):
+        Refit_path = self.base_dir
+        for item in os.listdir(Refit_path):
             if item.startswith('House') and item.endswith('.csv'):
-                df = pd.read_csv(f'{reffit_path}/{item}')
+                df = pd.read_csv(f'{Refit_path}/{item}')
                 aggregate = df['Aggregate']
                 time = df["Unix"] - df["Unix"].iloc[0]
 

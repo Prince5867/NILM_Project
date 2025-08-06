@@ -133,11 +133,11 @@ def main():
 
     for appliance in appliance:   
         base_dir = Path(__file__).resolve().parent.parent.parent
-        reffit_path = os.path.join(base_dir, 'Reffit')
-        folder_path = Path(f'{reffit_path}/{appliance}')
+        Refit_path = os.path.join(base_dir, 'Refit')
+        folder_path = Path(f'{Refit_path}/{appliance}')
         try:
-            # folder_path = pd.read_csv(f'{reffit_path}/{appliance}')
-            output_path = os.path.join(reffit_path, 'Processed',appliance)
+            # folder_path = pd.read_csv(f'{Refit_path}/{appliance}')
+            output_path = os.path.join(Refit_path, 'Processed',appliance)
             os.makedirs(output_path, exist_ok=True)
             print("output path    ",output_path)
             for item in folder_path.iterdir():
