@@ -12,6 +12,45 @@ This project focuses on appliance-level energy disaggregation using deep learnin
 
 ## 📦 Project Structure
 
+
+├── Model/ # Models and preprocessing tools
+│ ├── CNN/ # CNN-based NILM models and scripts
+│ │ ├── CNN model.py
+│ │ ├── Conv1D_GLU.py
+│ │ ├── ResidualBlock.py
+│ │ ├── tf CNN model.ipynb
+│ │ ├── *.keras # Saved Keras models
+│ │ ├── *.tflite # TFLite quantized models
+│ │ ├── *.json # Scaler parameter files
+│ │ ├── test_constrained/ # Edge testing setup (Python & C++)
+│ │ │ ├── inference.py
+│ │ │ ├── main.cpp
+│ │ │ ├── *.csv # Sample aggregate + label files
+│ │ │ ├── *.tflite
+│ │ │ ├── Requirements.txt
+│ │ │ └── pycache/
+│ │ └── former version/ # Older models/scripts
+
+│ └── Preprocessing/ # Data preprocessing scripts
+│ ├── DAD_converter.py # Dataset conversion logic
+│ └── windowing.py # Time series windowing
+
+├── Reffit/ # Main dataset (per appliance)
+│ ├── Aggregate/
+│ ├── Kettle/
+│ ├── Fridge/
+│ ├── ...
+│ ├── ToolKit/ # Helper functions for data exctraction
+│ │   └── appliance.py
+│ │   └── house_data.txt
+
+│ └── Processed/ # Processed versions for training/inference
+│ ├── Aggregate/
+│ ├── Dishwasher/
+│ ├── Kettle/
+│ ├── ...
+│ └── Washing Machine/
+
 ---
 ## 🧠 Models Implemented
 
