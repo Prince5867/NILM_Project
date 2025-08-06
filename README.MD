@@ -12,28 +12,17 @@ This project focuses on appliance-level energy disaggregation using deep learnin
 
 ## 📦 Project Structure
 
+For memory purposes all the datasets and .csv files are excluded from this respository and need to be downloaded from https://pureportal.strath.ac.uk/en/datasets/refit-electrical-load-measurements-cleaned/datasets/
 
 ├── Model/ # Models and preprocessing tools
-│ ├── CNN/ # CNN-based NILM models and scripts
-│ │ ├── CNN model.py
-│ │ ├── Conv1D_GLU.py
-│ │ ├── ResidualBlock.py
-│ │ ├── tf CNN model.ipynb
-│ │ ├── *.keras # Saved Keras models
-│ │ ├── *.tflite # TFLite quantized models
-│ │ ├── *.json # Scaler parameter files
-│ │ ├── test_constrained/ # Edge testing setup (Python & C++)
-│ │ │ ├── inference.py
-│ │ │ ├── main.cpp
-│ │ │ ├── *.csv # Sample aggregate + label files
-│ │ │ ├── *.tflite
-│ │ │ ├── Requirements.txt
-│ │ │ └── pycache/
-│ │ └── former version/ # Older models/scripts
-
+│ ├── ML_pipeline/ # CNN-based NILM models and scripts
+│ │ ├── NILM_pipeline.ipynb
+│ │ ├── keras_model/ # Saved Keras models
+│ │ ├── tflite_models/ # TFLite quantized models
+│ │ └── *.json # Scaler parameter files
 │ └── Preprocessing/ # Data preprocessing scripts
-│ ├── DAD_converter.py # Dataset conversion logic
-│ └── windowing.py # Time series windowing
+│   ├── DAD_converter.py # Dataset conversion logic
+│   └── windowing.py # Time series windowing
 
 ├── Reffit/ # Main dataset (per appliance)
 │ ├── Aggregate/
@@ -41,8 +30,8 @@ This project focuses on appliance-level energy disaggregation using deep learnin
 │ ├── Fridge/
 │ ├── ...
 │ ├── ToolKit/ # Helper functions for data exctraction
-│ │   └── appliance.py
-│ │   └── house_data.txt
+│     └── appliance.py
+│     └── house_data.txt
 
 │ └── Processed/ # Processed versions for training/inference
 │ ├── Aggregate/
@@ -50,6 +39,13 @@ This project focuses on appliance-level energy disaggregation using deep learnin
 │ ├── Kettle/
 │ ├── ...
 │ └── Washing Machine/
+
+├── inference/ # Edge testing setup (Python & C++)
+│ ├── inference.py
+│ ├── main.cpp
+│ ├── datasets/ # Synthetic and real-life data sets (X and y) 
+│ ├── tflite_models/ models to use for inference
+│ └── Requirements.txt
 
 ---
 ## 🧠 Models Implemented
