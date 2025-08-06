@@ -1,4 +1,5 @@
 import json
+import os
 import argparse
 import pandas as pd
 import numpy as np
@@ -13,7 +14,7 @@ from sklearn.metrics import explained_variance_score
 class InferenceModel:
     def __init__(self, model_path):
         self.model_path = Path(model_path)
-        self.base_dir = self.model_path.parent
+        self.base_dir = self.model_path.parent.parent
         self.interpreter = self.load_tflite_model()
         self.input_details = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
@@ -47,7 +48,9 @@ class InferenceModel:
     def get_data_files(self):
         data_dict = {'X': '', 'y': '', 'X_test': '', 'y_test': ''}
         print(f"Looking for CSV files in: {self.base_dir}")
-        for item in self.base_dir.iterdir():
+        datadir = os.path.join(self.base_dir, 'datasets')
+        datadir = Path(datadir)
+        for item in datadir.iterdir():
             if item.suffix == '.csv':
                 if item.name == 'Synthetic_Aggregate.csv':
                     print(f"Found CSV: {item.name}")
@@ -196,7 +199,7 @@ def main():
     parser.add_argument('--samples', type=int, default=1000, help='Number of samples to run inference on')
     args = parser.parse_args()
 
-    model_path = Path(args.model).resolve()
+    model_path = Path(f'./tflite_models/{args.model}').resolve()
     inference = InferenceModel(model_path)
     X, y, X_test, y_test = inference.preprocess_data(no_samples=args.samples)
     predictions = inference.run_model(X)
