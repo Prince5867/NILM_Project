@@ -152,16 +152,6 @@ class Appliance_Manipulation:
                             f'{appliance_name}': appliance_column,
                         })
 
-                    # else:
-                    #     for i in len(appliance_id):
-                    #         f'appliance_column{i}' = df[f'Appliance{appliance_id[i]}']
-                    #         unix_column = df['Unix']
-                    #         new_df = pd.DataFrame({
-                    #             'Unix': unix_column,
-                    #             f'{appliance_name}{i}': f'appliance_column{i}',
-                    #         })
-                    #         temp_list.append(new_df)
-                    # base_dir = Path(__file__).resolve().parent.parent
                     os.makedirs(f'{self.base_dir}/{appliance_name}', exist_ok=True)
                     new_df.to_csv(f'{self.base_dir}/{appliance_name}/{appliance_name}_{house}.csv', index=False)
                 except Exception as e:
