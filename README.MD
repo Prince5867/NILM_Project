@@ -1,6 +1,6 @@
 # NILM: Non-Intrusive Load Monitoring using Embedded AI
 
-This project focuses on appliance-level energy disaggregation using deep learning techniques. It aims to accurately identify and separate power consumption patterns of individual appliances from an aggregated household energy signal. The models are optimized for edge deployment on platforms such as Raspberry Pi.
+This project focuses on appliance-level energy disaggregation using deep learning techniques. It aims to accurately identify and separate power consumption patterns of individual appliances from an aggregated household energy signal. The models are optimized for edge deployment on a Raspberry Pi.
 
 ## 🔍 Project Goals
 

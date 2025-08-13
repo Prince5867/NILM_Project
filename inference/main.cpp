@@ -8,7 +8,7 @@ int main() {
     const char* model_path = "model.tflite";
 
     // Load TFLite model from file
-    std::unique_ptr<tflite::FlatBufferModel> model = tflite::FlatBufferModel::BuildFromFile(model_path);
+    auto model = tflite::FlatBufferModel::BuildFromFile(model_path);
     if (!model) {
         std::cerr << "Failed to load model: " << model_path << std::endl;
         return -1;
@@ -17,10 +17,17 @@ int main() {
     // Build the interpreter with the built-in ops resolver
     tflite::ops::builtin::BuiltinOpResolver resolver;
     std::unique_ptr<tflite::Interpreter> interpreter;
-    if (tflite::InterpreterBuilder(*model, resolver)(&interpreter) != kTfLiteOk) {
+    tflite::InterpreterBuilder(*model, resolver)(&interpreter);
+    if (!interpreter) {
         std::cerr << "Failed to construct interpreter" << std::endl;
         return -1;
     }
+
+    // (Optional) Print interpreter capacity constants to ensure compatibility
+    std::cout << "Reserved capacity: "
+              << tflite::Interpreter::kTensorsReservedCapacity << std::endl;
+    std::cout << "Capacity headroom: "
+              << tflite::Interpreter::kTensorsCapacityHeadroom << std::endl;
 
     // Allocate memory for tensors
     if (interpreter->AllocateTensors() != kTfLiteOk) {
@@ -32,10 +39,11 @@ int main() {
     float* input = interpreter->typed_input_tensor<float>(0);
     int input_size = interpreter->input_tensor(0)->bytes / sizeof(float);
 
-    // Fill input tensor with dummy data (zeroes)
-    for (int i = 0; i < input_size; i++) {
-        input[i] = 0.0f;
-    }
+    // Fill input tensor with dummy data (zeros)
+    std::fill(input, input + input_size, 0.0f);
+
+    // (Optional) Print interpreter state before running
+    // tflite::PrintInterpreterState(interpreter.get());
 
     // Run inference
     if (interpreter->Invoke() != kTfLiteOk) {
@@ -49,7 +57,7 @@ int main() {
 
     // Print output values
     std::cout << "Output tensor values:" << std::endl;
-    for (int i = 0; i < output_size; i++) {
+    for (int i = 0; i < output_size; ++i) {
         std::cout << output[i] << " ";
     }
     std::cout << std::endl;

@@ -201,7 +201,7 @@ class Appliance_Manipulation:
                     plt.figure(figsize=(6, 3))
                     plt.plot(preview_df['Unix'], preview_df[appliance_name])
                     plt.title(f"Preview: {file.name}")
-                    plt.xlabel("Unix Time")
+                    plt.xlabel("Time (s)")
                     plt.ylabel("Power (W)")
                     plt.grid(True)
                     plt.tight_layout()
@@ -238,7 +238,7 @@ class Appliance_Manipulation:
 
             ax.plot(df['Unix'], df[appliance_name])
             ax.set_title(appliance_name.capitalize(), fontsize=11)
-            ax.set_xlabel('Unix Time')
+            ax.set_xlabel('Time (s)')
             ax.set_ylabel('Power (W)')
             ax.grid(True)
 
@@ -365,10 +365,10 @@ def main():
     # for appliance in appliance:
         # appliance_map = appliance_manipulation.map_creator()
         # fridge_data = appliance_manipulation.column_extractor(appliance)
-    # plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
+    plot_data = appliance_manipulation.plot_all_appliances_grid(appliance_with_issues)
     # aggregate_data_extractor = appliance_manipulation.aggregate_data_extractor()
     # appliance_manipulation.extract_full_house_data(300,'House_9.csv')
-    appliance_manipulation.combining_houses(['House_1.csv','House_20.csv'],['Washer Dryer','Dishwasher','Kettle'], include_agg=False)
+    # appliance_manipulation.combining_houses(['House_1.csv','House_20.csv'],['Washer Dryer','Dishwasher','Kettle'], include_agg=False)
 
 
 if __name__ == "__main__":
