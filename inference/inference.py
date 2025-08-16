@@ -140,7 +140,7 @@ class InferenceModel:
 
         print(f"🔍 Evaluating model: {model}")
         print(f"📊 Overall Metrics:")
-        print(f"Mean Absolute Error (Watts): {mae:.4f}")
+        print(f"Mean Average Error (Watts): {mae:.4f}")
         print(f"Residual Variance: {residual_variance:.4f}")
         print(f"Explained Variance Score: {explained_variance:.4f}")
 
